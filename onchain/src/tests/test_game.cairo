@@ -32,7 +32,7 @@ mod tests {
                 // Register the Player model's class hash
                 TestResource::Model(m_Player::TEST_CLASS_HASH),
                 TestResource::Model(m_AddressToUsername::TEST_CLASS_HASH),
-                TestResource::Model(m_UsernameToAddress::TEST_CLASS_HASH)
+                TestResource::Model(m_UsernameToAddress::TEST_CLASS_HASH),
 
                 // Register the main contract containing game actions
 
