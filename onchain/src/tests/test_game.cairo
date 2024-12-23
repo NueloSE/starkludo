@@ -13,6 +13,10 @@ mod tests {
     use starkludo::models::game::{Game, m_Game};
     use starkludo::models::player::{Player, m_Player, AddressToUsername, UsernameToAddress, m_AddressToUsername, m_UsernameToAddress};
 
+    use starkludo::models::game::{GameMode, GameStatus};
+    use starkludo::models::player::{AddressToUsername, UsernameToAddress, m_AddressToUsername, m_UsernameToAddress};
+    use starkludo::errors::Errors;
+
     /// Defines the namespace configuration for the Starkludo game system
     /// Returns a NamespaceDef struct containing namespace name and associated resources
     fn namespace_def() -> NamespaceDef {
@@ -28,6 +32,8 @@ mod tests {
 
                 // Register the Player model's class hash
                 TestResource::Model(m_Player::TEST_CLASS_HASH),
+                TestResource::Model(m_AddressToUsername::TEST_CLASS_HASH),
+                TestResource::Model(m_UsernameToAddress::TEST_CLASS_HASH),
 
                 TestResource::Model(m_AddressToUsername::TEST_CLASS_HASH),
                 TestResource::Model(m_UsernameToAddress::TEST_CLASS_HASH),
@@ -39,6 +45,7 @@ mod tests {
 
                 // Register the GameCreated event's class hash
                 TestResource::Event(GameActions::e_GameCreated::TEST_CLASS_HASH),
+                TestResource::Event(GameActions::e_GameStarted::TEST_CLASS_HASH),
             ].span() // Convert array to a Span type
         };
 
@@ -138,4 +145,41 @@ mod tests {
         let retrieved_username3 = game_action_system.get_username_from_address(non_existent_address);
         assert(retrieved_username3 == 0, 'Non-existent should return 0');
     }
+
+fn test_start_game_success() {
+        // Setup world and contract
+        let caller = starknet::contract_address_const::<'Mr_T'>();
+        let ndef = namespace_def();
+        let mut world = spawn_test_world([ndef].span());
+        world.sync_perms_and_inits(contract_defs());
+
+        let (contract_address, _) = world.dns(@"GameActions").unwrap();
+        let game_action_system = IGameActionsDispatcher { contract_address };
+
+        // Setup caller's username mapping
+        let username: felt252 = 'test_player';
+        let address_username = AddressToUsername { address: caller, username };
+        let username_address = UsernameToAddress { username, address: caller };
+        world.write_model(@address_username);
+        world.write_model(@username_address);
+
+        // Create new game
+        let game_id = game_action_system.create(
+            GameMode::MultiPlayer,
+            username,  // green player (creator)
+            'player2',
+            'player3',
+            'player4',
+            4
+        );
+
+        // Start game
+        game_action_system.start();
+
+        // Verify game state
+        let game: Game = world.read_model(game_id);
+        assert(game.game_status == GameStatus::Ongoing, 'Game should be ongoing');
+        assert(game.next_player == game.player_green, 'Green should be next player');
+    }
+
 }
