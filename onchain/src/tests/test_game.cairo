@@ -14,7 +14,6 @@ mod tests {
     use starkludo::models::player::{Player, m_Player, AddressToUsername, UsernameToAddress, m_AddressToUsername, m_UsernameToAddress};
 
     use starkludo::models::game::{GameMode, GameStatus};
-    use starkludo::models::player::{AddressToUsername, UsernameToAddress, m_AddressToUsername, m_UsernameToAddress};
     use starkludo::errors::Errors;
 
     /// Defines the namespace configuration for the Starkludo game system
